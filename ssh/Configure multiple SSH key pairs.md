@@ -1,15 +1,17 @@
+Step1:
+
 ```sh
 vim ~/.ssh/config
 ```
 
+Step2:
+
 ```conf
 # Example1
-Host github1
-HostName github.com
-IdentityFile ~/.ssh/example1_rsa
+Host github.com
+  IdentityFile ~/.ssh/example1_rsa
 
 # Example2
-Host github2
-HostName github.com
-IdentityFile ~/.ssh/example2_rsa
+Host gitlab.com
+  IdentityFile ~/.ssh/example2_rsa
 ```
