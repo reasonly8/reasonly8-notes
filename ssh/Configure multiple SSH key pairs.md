@@ -4,10 +4,12 @@ vim ~/.ssh/config
 
 ```conf
 # Example1
-Host github.com
-  IdentityFile ~/.ssh/example1_rsa
+Host github1
+HostName github.com
+IdentityFile ~/.ssh/example1_rsa
 
 # Example2
-Host 1.1.1.1
-  IdentityFile ~/.ssh/example2_rsa
+Host github2
+HostName github.com
+IdentityFile ~/.ssh/example2_rsa
 ```
