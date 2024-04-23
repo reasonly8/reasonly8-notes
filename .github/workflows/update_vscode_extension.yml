@@ -1,0 +1,17 @@
+name: Update VS Code Extension
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  trigger-action:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Trigger repository_dispatch event in Repository of reasonly8-notes-vscode-extension
+        uses: peter-evans/repository-dispatch@v1
+        with:
+          token: ${{ secrets.GI_API_TOKEN }}
+          repository: reasonly8/reasonly8-notes-vscode-extension
+          event-type: publish-extension
