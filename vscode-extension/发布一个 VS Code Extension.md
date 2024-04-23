@@ -1,3 +1,5 @@
+`vsce` 是官方维护的插件打包、发布工具；
+
 ```sh
 npm i -g @vscode/vsce
 cd myExtension
