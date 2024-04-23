@@ -1,3 +1,3 @@
 # reasonly8-notes
 
-My personal technical notes.
+我的个人技术文档，通过 Github Workflow + VS Code Extension 管理和展示；
