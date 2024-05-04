@@ -472,7 +472,7 @@ interface ImportMeta {
 }
 ```
 
-从上面的例子可以看出，import.meta 就是一个规范规定的，放置模块、环境或框架元信息的全局对象，Vite 中使用 import.meta 最多的场景，是通过它取得环境变量，除了上面 ImportMetaEnv 中内置的 `DEV`、`PROD` 等，还可以取到在 .env.xxx 中自定义的以 `VITE_` 开头的自定义环境变量。
+从上面的例子可以看出，import.meta 就是一个规范（ESM）规定的，放置模块、环境或框架元信息的全局对象，Vite 中使用 import.meta 最多的场景，是通过它取得环境变量，除了上面 ImportMetaEnv 中内置的 `DEV`、`PROD` 等，还可以取到在 .env.xxx 中自定义的以 `VITE_` 开头的自定义环境变量。
 
 自定义环境变量，Vite 只认 `VITE_` 开头的环境变量：
 
@@ -504,3 +504,409 @@ import.meta.env.VITE_APP_NAME; // string
 ```
 
 这样就可以在代码中的任何地方获取到 `VITE_APP_NAME` 这个环境变量了。
+
+#### 浏览器环境和 Node 环境
+
+按照上面的配置，我们可以在 src 中的任何 ts 和 vue 代码中，通过 `import.meta.env` 取得环境变量，但是，在 `vite.config.ts` 中不行：
+
+```ts
+// vite.config.ts
+
+console.log(import.meta.env); // undefined
+```
+
+起初我以为只是 ts 报错，因为 tsconfig.json 中并没有在 include 字段中包含 vite.config.ts，但我加上了，仍旧是 undefined：
+
+```json
+// tsconfig.json
+{
+  // ...
+  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.vue", "./vite.config.ts"]
+  // "references": [{ "path": "./tsconfig.node.json" }]
+}
+```
+
+实事证明，Vite 并没有将 import.meta 的增强带到 Node 环境，这也是为什么要单独建一个配置文件：`tsconfig.node.json` 的原因，因为 vite.config.ts 是执行在 Node 环境中的，因此不能在该文件下通过 import.meta.env 拿到环境变量，取而代之的是，Vite 内部提供了一个 `loadEnv` 函数，专门用来获取环境变量：
+
+```ts
+// vite.config.ts
+
+import { ConfigEnv, defineConfig, loadEnv } from "vite";
+import vue from "@vitejs/plugin-vue";
+import { fileURLToPath } from "node:url";
+
+// https://vitejs.dev/config/
+export default ({ mode }: ConfigEnv) => {
+  const env = loadEnv(mode, process.cwd());
+  console.log(env); // { VITE_APP_NAME: 'Todo List' }
+
+  return defineConfig({
+    plugins: [vue()],
+    resolve: {
+      alias: {
+        "@": fileURLToPath(new URL("./src", import.meta.url)),
+      },
+    },
+  });
+};
+```
+
+## Vitest
+
+总算进入正题了，Vitest。
+
+### 安装 Vitest
+
+```sh
+pnpm i -D vitest
+```
+
+安装完成后，在 package.json 中写上 test script：
+
+```json
+// package.json
+{
+  // ...
+  "scripts": {
+    "test": "vitest"
+  }
+}
+```
+
+然后就写一些专门的测试文件，按照 Vitest 的约定，测试文件名称中需要包含 `.test.` 或 `.spec.`：
+
+```ts
+// src/utils/listItem/getItemById.test.ts
+import { expect, test } from "vitest";
+import { getItemById } from "./getItemById";
+import type { BaseItem } from "@/types";
+
+test('get item by id: "1"', () => {
+  const list: (BaseItem & { name: string })[] = [
+    { id: "1", name: "first" },
+    { id: "2", name: "second" },
+  ];
+
+  expect(getItemById(list, "1")).toBe(list[0]);
+});
+```
+
+写好以后，执行 `pnpm test`，可以得到类似下面的结果：
+
+```sh
+ DEV  v1.6.0 D:/projects/todo-list-for-learning-vitest
+
+ ✓ src/utils/listItem/getItemById.test.ts (1)
+   ✓ get item by id: "1"
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  11:49:59
+   Duration  960ms (transform 55ms, setup 0ms, collect 60ms, tests 3ms, environment 0ms, prepare 606ms)
+
+
+ PASS  Waiting for file changes...
+       press h to show help, press q to quit
+```
+
+嗯，还挺简单的，至少测纯函数蛮简单的，只需要记住这个模版就好：
+
+```ts
+import { expect, test } from "vitest";
+
+test("test name", () => {
+  expect(xxx()).toBe(yyy);
+});
+```
+
+此外，vitest 在开发环境下默认开启了监听模式，可以在修改源代码或测试文件时自动且只会运行相关的测试文件，如果是 CI 环境下，那监听模式就不适用了，此时 Vitest 默认是 `vitest run` 运行模式：
+
+```sh
+# process.env.NODE_ENV === 'development'
+vitest watch
+# or
+vitest
+
+# process.env.CI
+vitest run
+```
+
+### 测试纯函数
+
+纯函数是很好测试的，就像这样：
+
+```ts
+import { expect, test } from "vitest";
+import { listItemAdd } from "./listItemAdd";
+import type { BaseItem } from "@/types";
+
+test("list item add", () => {
+  const list: BaseItem[] = [];
+
+  const newItem: BaseItem = { id: "1" };
+  expect(listItemAdd(list, newItem)).toEqual([newItem]);
+});
+```
+
+1. test 函数，别名是 `it`，作用是定义一组相关的期望，具体的测试就发生在这里面；
+2. expect 用于创建断言，单元测试主要就是通过断言来判断函数是否按预期来执行的，最常用的 toBe（原始类型值相等，或引用相等）、toEqual（实际值相等）。
+
+上面例子中用的是 toEqual，原因是 listItemAdd 会返回一个新的 list，引用变了，就不能用 equal 或 toBe。
+
+接下来，需要“整合”一下 src/utils 中的测试代码，这样单独写，造测试用例会比较麻烦：
+
+```txt
+utils
+└─ listItem
+   ├─ getItemById.test.ts
+   ├─ getItemById.ts
+   ├─ listItemAdd.test.ts
+   ├─ listItemAdd.ts
+   ├─ listItemRemove.test.ts
+   ├─ listItemRemove.ts
+   ├─ listItemUpdate.test.ts
+   └─ listItemUpdate.ts
+```
+
+改成这样：
+
+```txt
+utils
+└─ listItem
+   ├─ __test__
+   │  └─ list.test.ts
+   ├─ getItemById.ts
+   ├─ listItemAdd.ts
+   ├─ listItemRemove.ts
+   └─ listItemUpdate.ts
+```
+
+#### 测试套件（suite）
+
+然后测试的代码改成这样：
+
+```ts
+// list.test.ts
+import type { BaseItem } from "@/types";
+import { describe, expect, it } from "vitest";
+import { listItemAdd } from "../listItemAdd";
+import { getItemById } from "../getItemById";
+import { listItemRemove } from "../listItemRemove";
+import { listItemUpdate } from "../listItemUpdate";
+
+describe("List Actions", () => {
+  type ItemType = BaseItem & { name: string };
+  const list1: ItemType[] = [
+    { id: "0", name: "0" },
+    { id: "1", name: "1" },
+    { id: "2", name: "2" },
+  ];
+  const list2: ItemType[] = [];
+
+  // 根据 ID 获取数组项
+  it("`getItemById` should get the list item by given id", () => {
+    expect(getItemById(list1, "1")).toBe(list1[1]);
+  });
+
+  // 获取数组项时，如果 ID 不存在就报错
+  it("`getItemById` should throw an error if the id dose not exist in the list", () => {
+    expect(() => getItemById(list2, "1")).toThrowError("item");
+  });
+
+  // 在数组头部添加一个成员
+  it("`listItemAdd` should add a member to the head of the list", () => {
+    const newItem: ItemType = { id: "3", name: "3" };
+    expect(listItemAdd(list1, newItem)).toEqual([newItem, ...list1]);
+  });
+
+  // 在数组尾部添加一个成员
+  it("`listItemAdd` should add a member to the end of the list", () => {
+    const newItem: ItemType = { id: "3", name: "3" };
+    expect(listItemAdd(list1, newItem, "tail")).toEqual([...list1, newItem]);
+  });
+
+  // 添加 id 重复的项时会报错
+  it("`listItemAdd` should throw an error if the id is duplicated", () => {
+    const newItem: ItemType = { id: "0", name: "3" };
+    expect(() => listItemAdd(list1, newItem)).toThrowError("duplicate");
+  });
+
+  // 移出对应的 id 或 ids 的项
+  it("`listItemRemove` should remove member by given id", () => {
+    expect(listItemRemove(list1, "0")).toEqual(list1.slice(1));
+  });
+
+  // 移出对应的 id 或 ids 的项
+  it("`listItemRemove` should remove members by given ids", () => {
+    expect(listItemRemove(list1, ["0", "1"])).toEqual([list1[2]]);
+  });
+
+  // 替换（更新）列表中的某一项
+  it("`listItemUpdate` should replace the member of array", () => {
+    const newItem: ItemType = { id: "2", name: "二" };
+    expect(listItemUpdate(list1, newItem)).toEqual([
+      ...list1.slice(0, 2),
+      newItem,
+    ]);
+  });
+
+  // 替换（更新）列表中的某一项时，如果 id 不存在，就会报错
+  it("`listItemUpdate` should throw an error if the id is not exist in the array", () => {
+    const newItem: ItemType = { id: "0", name: "零" };
+    expect(() => listItemUpdate(list2, newItem)).toThrowError(
+      "cannot find member"
+    );
+  });
+});
+```
+
+`describe` 函数用于组织测试用例，他可以将一组相关的测试用例整合到一起，成为一个测试套件（suite），也称为测试组，或测试集合。因为单元测试测的是最小单元，如果都是分散的，那会重复做一些 mock、或准备工作。
+
+因此将他们用 `describe` 组合起来，就像是一个功能模块一样，可以在更高的层面去复用和管理，比如测试一个“类”，或者上面提到的“单向组件流”中，同一个目录下的各个功能点就可以用 `describe` 将他们整合起来管理。
+
+#### 断言（Assertions）
+
+上面代码中，类似 toBe、thThrowError、toEqual 这些方法有很多，它们被统称为“断言”，断言是测试框架提供的一组方法，用来检查代码的行为是否符合预期。
+
+Vitest 中的断言来自断言库：Chai，具体查看[文档](https://cn.vitest.dev/api/assert.html)。
+
+### 测试组合式函数
+
+纯函数好测，输入定了，输出也就定了，组合式函数就不一样，它本身自带副作用，基本都是带闭包的函数，所以，组合式函数的单元测试，我感觉会主要集中在对返回值（对象）的测试上，下面写一个简单的组合式函数 `useCount` 来做演示：
+
+```ts
+// src/composables/useCount.ts
+
+import { readonly, ref } from "vue";
+
+export function useCount() {
+  const count = ref(0);
+
+  function increment() {
+    count.value++;
+  }
+
+  function reset() {
+    count.value = 0;
+  }
+
+  return {
+    increment,
+    reset,
+    count: readonly(count),
+  };
+}
+```
+
+然后在同级增加测试用例文件：
+
+```ts
+// src/composables/useCount.test.ts
+
+import { expect, it } from "vitest";
+import { useCount } from "./useCount";
+import { describe } from "node:test";
+
+describe("useCount", () => {
+  it("`count` should return initial count: 0", () => {
+    const { count } = useCount();
+    expect(count.value).toBe(0);
+  });
+
+  it("`increment` function should increase count by 1", () => {
+    const { count, increment } = useCount();
+    increment();
+    expect(count.value).toBe(1);
+  });
+
+  it("`reset` function should reset count to initial value: 0", () => {
+    const { count, increment, reset } = useCount();
+    increment();
+    reset();
+    expect(count.value).toBe(0);
+  });
+});
+```
+
+基本跟纯函数的测法没有区别，主要是测试的关注点有些许不同。
+
+### 测试 Vue 组件
+
+对组件进行单元测试，得配合 `@vue/test-utils`，配合 jsdom 或 happly-dom 进行测试。
+
+#### 安装组合式函数测试包
+
+```sh
+pnpm i -D @vue/test-utils happy-dom
+```
+
+安装好后，需要在 vite.config.ts 中配置一下，因为 Vitest 跟 Vite 共享同一套配置，所以比较方便：
+
+```ts
+// vite.config.ts
+// 三斜线指令引入 vitest 的类型声明文件，为 test 字段提供类型支持
+/// <reference types="vitest" />
+
+import { defineConfig } from "vite";
+import vue from "@vitejs/plugin-vue";
+import { fileURLToPath } from "node:url";
+
+// https://vitejs.dev/config/
+export default () => {
+  return defineConfig({
+    plugins: [vue()],
+    resolve: {
+      alias: {
+        "@": fileURLToPath(new URL("./src", import.meta.url)),
+      },
+    },
+    test: {
+      coverage: {
+        include: ["src/**/*.ts", "src/**/*.vue"], // 需要测试的模块
+        exclude: ["src/main.ts"], // 排除的模块
+      },
+      environment: "happy-dom", // 环境，统一配置，比注释写法更方便
+    },
+  });
+};
+```
+
+完事后就可以简单测一下 vue 单文件组件是否正常渲染了：
+
+```ts
+// src/components/todo-list/list-item/__test__/list-item.test.ts
+
+import { shallowMount } from "@vue/test-utils";
+import { describe, it } from "vitest";
+import ListItem from "../ListItem.vue";
+import { expect } from "vitest";
+
+describe("list-item", () => {
+  describe("ListItem.vue", () => {
+    it("render correctly", () => {
+      const wrapper = shallowMount(ListItem);
+      expect(wrapper.find("button").text()).toBe("Del");
+    });
+  });
+});
+```
+
+`shallowMount` 和 `mount` 的区别主要在渲染深度上，前者只会渲染组件的直接子组件，不会渲染子组件的子组件，适合测试目标组件的独立功能，而 `mount` 会像在 DOM 中一样递归向下全部渲染，适用于测试组件及内部子组件交互和集成。
+
+上例中只是简单的判断组件是否正常渲染，因此有 shallowMount 就行了，此外，不必通过期望 `text()` 得到具体的值来判断组件是否正常渲染，更好的方法是使用 `wrapper.exists()`：
+
+```ts
+import App from "@/App.vue";
+import { shallowMount } from "@vue/test-utils";
+import { expect } from "vitest";
+import { describe, it } from "vitest";
+
+describe("app", () => {
+  it("render correctly", () => {
+    const wrapper = shallowMount(App);
+    expect(wrapper.exists()).toBe(true);
+  });
+});
+```
+
+### 测试覆盖率
