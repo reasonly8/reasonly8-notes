@@ -1,5 +1,34 @@
 # Todo List for Learning Vitest
 
+- [Todo List for Learning Vitest](#todo-list-for-learning-vitest)
+  - [项目初始化](#项目初始化)
+    - [用脚手架生成项目](#用脚手架生成项目)
+    - [配置 `@` 路径别名](#配置--路径别名)
+      - [\_\_dirname 和 import.meta.url](#__dirname-和-importmetaurl)
+      - [baseUrl](#baseurl)
+      - [paths](#paths)
+  - [编写 TodoList 代码](#编写-todolist-代码)
+    - [“单向组件流”](#单向组件流)
+    - [纯函数](#纯函数)
+    - [vite-env.d.ts 的作用](#vite-envdts-的作用)
+      - [全局类型声明](#全局类型声明)
+      - [ImportMeta 接口增强](#importmeta-接口增强)
+      - [浏览器环境和 Node 环境](#浏览器环境和-node-环境)
+  - [Vitest](#vitest)
+    - [安装 Vitest](#安装-vitest)
+    - [测试纯函数](#测试纯函数)
+      - [测试套件（suite）](#测试套件suite)
+      - [断言（Assertions）](#断言assertions)
+    - [测试组合式函数](#测试组合式函数)
+    - [测试 Vue 组件](#测试-vue-组件)
+      - [安装组合式函数测试包](#安装组合式函数测试包)
+      - [测试组件是否正常渲染](#测试组件是否正常渲染)
+      - [测试 props 和 emits](#测试-props-和-emits)
+    - [测试覆盖率](#测试覆盖率)
+  - [总结](#总结)
+  - [接下来...](#接下来)
+  - [参考](#参考)
+
 最新想学一下 Vitest，原因是之前从来没有接触过，虽然老早就知道前端项目需要单元测试、端到端测试、UI 测试等，但由于公司没有这方面的要求，且业务需求经常变化，基本没有时间写测试，所以就没有学起来。
 
 之所以选择 Vitest，是因为我现在主要使用 Vite 和 Vue3，而且它是 antfu 等一众大佬开发和维护的，所以会比较放心。
