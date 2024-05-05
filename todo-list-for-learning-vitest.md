@@ -1,14 +1,16 @@
 # Todo List for Learning Vitest
 
-最新想学一下 Vitest，原因是之前从来没有接触过，虽然老早就知道前端项目需要单元测试、端到端测试、UI 测试等，但由于公司没有这方面的要求，且业务需求经常变化，基本没有写测试的时间，所以就迟迟没有学起来。
+最新想学一下 Vitest，原因是之前从来没有接触过，虽然老早就知道前端项目需要单元测试、端到端测试、UI 测试等，但由于公司没有这方面的要求，且业务需求经常变化，基本没有时间写测试，所以就没有学起来。
 
 之所以选择 Vitest，是因为我现在主要使用 Vite 和 Vue3，而且它是 antfu 等一众大佬开发和维护的，所以会比较放心。
 
-我通过实现一个 Todo List 项目，来对 Vitest 进行学习，项目很小，很合适用来入门。
+我通过实现一个 [Todo List 项目](https://github.com/reasonly8/todo-list-for-learning-vitest)，来学习 Vitest，项目很小，合适用来入门。
 
-项目技术栈为：Vue3 + TypeScript + TailwindCSS
+项目技术栈为：Vite + Vue3 + TypeScript + TailwindCSS
 
 ## 项目初始化
+
+这部分主要写一下在用 Vite 创建项目模版时，一直忽略的细节。
 
 ### 用脚手架生成项目
 
@@ -209,7 +211,7 @@ paths 用于设置模块路径映射，作用跟 vite.config.ts 中的 resolve.a
 }
 ```
 
-TS 编译器会先去 node_modules 中查找 module-a，如果没找到，再再基于 paths 查找，首先会在数组第一项中找，如果没找到，就去第二项中找，这样写的好处是，import 的时候，入口是统一的：
+TS 编译器会先去 node_modules 中查找 module-a，如果没找到，再基于 paths 查找，首先会在数组第一项中找，如果没找到，就去第二项中找，这样写的好处是，import 的时候，入口是统一的：
 
 ```ts
 import { foo } from "module-a/foo";
@@ -266,7 +268,7 @@ src
 
 ### “单向组件流”
 
-“单向组件流”是我自己命的名，用来描述下面这种组件组织结构：
+“单向组件流”是我自己命的名，用来描述下面这种基于组件的代码组织结构：
 
 ```txt
 todo-list
@@ -281,7 +283,7 @@ todo-list
   └─ useTodoList.ts
 ```
 
-这种结构有很多优点，通过将组件放置到它专属的文件夹中，可以在组件的同级添加与组件相关的组合式函数、类型、枚举、静态数据等。比如上面的 `todo-list` 这个组件，它始终会有一个跟它同名但是大驼峰的 TodoList.vue 组件，而这个组件，会用到 `useTodoList.ts`、`genNewItem.ts` 等函数，它们在同级目录下，非常便于查找，此外，它还会用到两个子组件：`add-input` 和 `list-item`，它们跟 `TodoList.vue` 同级，但被划分到专属的文件夹中，以便存放跟跟它相关的函数、类型、静态数据等。假如下面还有子组件，那就继续往下添加组件文件夹，比如像这样：
+这种结构有很多优点，通过将组件放置到它专属的文件夹中，可以在组件的同级添加与组件相关的组合式函数、类型、枚举、静态数据等。比如上面的 `todo-list` 这个组件，它始终会有一个跟它同名但是大驼峰的 TodoList.vue 组件，而这个组件，会用到 `useTodoList.ts`、`genNewItem.ts` 等函数，它们在同级目录下，非常便于查找，此外，它还会用到两个子组件：`add-input` 和 `list-item`，它们跟 `TodoList.vue` 同级，但被划分到专属的文件夹中，以便存放跟它相关的函数、类型、静态数据等。假如下面还有子组件，那就继续往下添加组件文件夹，比如像这样：
 
 ```
 todo-list
@@ -292,7 +294,7 @@ todo-list
      └─ useAddInput.ts
 ```
 
-一旦组件这样放置后，模块的导入关系将变得非常清晰，比如 TodoList.vue 中，所有模块都是它的同级，非常容易查找，并且，这种树状的嵌套结构，贴合了实际的 DOM 树结构，在开发、修改、BUG 定位时会带来便利。
+组件一旦这样放置后，模块的导入关系将变得非常清晰，比如 TodoList.vue 中，所有模块都是它的同级，非常容易查找，并且，这种树状的嵌套结构，贴合了实际的 DOM 树结构，在开发、修改、BUG 定位时都会带来便利。
 
 ```vue
 <script lang="ts" setup>
@@ -309,15 +311,15 @@ const { list, add, remove, update, removeAllCompletedItems } = useTodoList();
 
 当我们开发一个新的功能时，往往会加一些组件、工具函数、组合式函数、枚举等，按照传统的模式，可能会将他们存放在单独的文件夹中，比如：`src/components`、`src/utils`、`src/composables`、`src/enums` 等，这种模式在小项目中没啥问题，可一旦项目变大了，那这些文件夹就会“爆炸”，可能会有几十上百个文件在同一个目录下的情况。而其中大部分，可能只会在某个组件中使用，这样做显然会造成可维护性和开发效率的降低。
 
-与其将一个完整的功能“肢解”后放置，不妨将这个功能需要用到的模块放到一起，然后基于“组件”单向地向下嵌套组织。这种组织结构假定所有组件和功能都只会在同级模块中相互使用，这样在开发时，不用一开始就不会花时间思考文件应该放在哪里，怎样提高复用性，而是在快速实现之后，进行有序地、逐步地重构。
+与其将一个完整的功能“肢解”后放置，不妨将这个功能需要用到的模块放到一起，然后基于“组件”单向地向下嵌套组织。这种组织结构假定所有组件和功能都只会在同级模块中相互使用，这样在开发时，就不用一开始就花时间思考文件应该放在哪里、怎样提高复用性，而是在快速实现之后，进行有序地、逐步地重构。
 
-过早地抽象是万恶之源，先实现，再一步步抽象，让模块始终保持独立，可以提高开发效率，降低心智负担。
+**过早地抽象是万恶之源**，先实现，再一步步抽象，让模块始终保持独立，可以提高开发效率，降低心智负担。
 
 这种结构有一些约定要遵守：
 
 1. layout 组件下存放 child 组件，包括 views 组件，views 组件下存放具体的功能组件，功能组件下存放需要用到子组件，子组件下存放需要用到的子子组件，以此类推；
-2. 组件的引用必须是同级，也就是说，import 时只能是这三种：`./`、`@/` 和第三方模块；
-3. 除了组件有专属文件夹外，其他模块都直接定义在同级，这么做也是为了实现上面第 2 点的要求；
+2. 组件的引用尽量得是同级，也就是说，import 时只能是这三种：`./`、`@/` 和第三方模块，如果不能遵守，那最好也只是引用深层子模块，而不是父级模块，因为这样不利于重构；
+3. 除了组件有专属文件夹外，其他模块都直接定义在同级，这么做也是为了实现上面第 2 点的要求，并且同级的类型收纳在 index.d.ts 中，这样外部引用时也会比较方便；
 
 基于这三点，我们可以很容易地重构代码，比方说，现在 todo-list 下的 list-item 在其他地方会用上，那我们直接 Ctrl + X 将 list-item 文件夹移动到 src/components 下，然后再修改一下 TodoList.vue 中 list-item 的引入路径即可。
 
@@ -325,7 +327,7 @@ const { list, add, remove, update, removeAllCompletedItems } = useTodoList();
 
 ### 纯函数
 
-src/utils 目录下存放的函数都是“纯”的，它们没有任何副作用，这是在为后面 Vitest 的学习做铺垫，为什么这么说呢？因为 Vitest 做单元测试时，主要就是测试纯函数，多写纯函数才能让单元测试发挥最大的作用。
+src/utils 目录下存放的函数都是“纯”的，它们没有任何副作用，这是在为后面 Vitest 的学习做铺垫，为什么这么说呢？因为 Vitest 做单元测试时，对纯函数的测试效果是最好的，多写纯函数才能让单元测试发挥最大的作用。
 
 如果不用纯函数实现，将逻辑写在组合式函数中，那就变成了有副作用的不纯的函数，由于 Vue 响应式系统的存在，类似 `list.value.push(newItem)` 和 `list.value.splice(0, 1)` 这样的操作可以非常方便地触发视图的响应式更新，但，我宁愿牺牲这种便利性，以换取“可测性”。
 
@@ -764,6 +766,8 @@ describe("List Actions", () => {
 
 因此将他们用 `describe` 组合起来，就像是一个功能模块一样，可以在更高的层面去复用和管理，比如测试一个“类”，或者上面提到的“单向组件流”中，同一个目录下的各个功能点就可以用 `describe` 将他们整合起来管理。
 
+此外，`describe` 还可以嵌套。
+
 #### 断言（Assertions）
 
 上面代码中，类似 toBe、thThrowError、toEqual 这些方法有很多，它们被统称为“断言”，断言是测试框架提供的一组方法，用来检查代码的行为是否符合预期。
@@ -803,9 +807,8 @@ export function useCount() {
 ```ts
 // src/composables/useCount.test.ts
 
-import { expect, it } from "vitest";
+import { expect, it, describe } from "vitest";
 import { useCount } from "./useCount";
-import { describe } from "node:test";
 
 describe("useCount", () => {
   it("`count` should return initial count: 0", () => {
@@ -832,7 +835,7 @@ describe("useCount", () => {
 
 ### 测试 Vue 组件
 
-对组件进行单元测试，得配合 `@vue/test-utils`，配合 jsdom 或 happly-dom 进行测试。
+对组件进行单元测试，得配合 `@vue/test-utils`，配合 jsdom 或 happy-dom 进行测试，这里我选择 happy-dom。
 
 #### 安装组合式函数测试包
 
@@ -893,7 +896,9 @@ describe("list-item", () => {
 
 `shallowMount` 和 `mount` 的区别主要在渲染深度上，前者只会渲染组件的直接子组件，不会渲染子组件的子组件，适合测试目标组件的独立功能，而 `mount` 会像在 DOM 中一样递归向下全部渲染，适用于测试组件及内部子组件交互和集成。
 
-上例中只是简单的判断组件是否正常渲染，因此有 shallowMount 就行了，此外，不必通过期望 `text()` 得到具体的值来判断组件是否正常渲染，更好的方法是使用 `wrapper.exists()`：
+#### 测试组件是否正常渲染
+
+上例中只是简单的判断组件是否正常渲染，所以 shallowMount 就行了，此外，不必通过期望 `text()` 得到具体的值来判断组件是否正常渲染，更好的方法是使用 `wrapper.exists()`：
 
 ```ts
 import App from "@/App.vue";
@@ -909,4 +914,193 @@ describe("app", () => {
 });
 ```
 
+#### 测试 props 和 emits
+
+按我的理解，将 Vue 组件看成一个黑盒，它跟外界交互的媒介就是：props 和 emits，props 就像函数参数，emits 则是函数返回值，因此，测试组件，主要测这两个就好，又因为这两块测好后，组件必定是正常渲染的，也就不必单独测试组件是否渲染正常，上一节中测试渲染正常的用例，可以用在没有 props 和 emits 的组件中。
+
+接下来演示一些测试用例，感觉后面会用得比较多：
+
+1. 测试 props 和 slots：
+
+```ts
+import { mount } from "@vue/test-utils";
+import { it } from "vitest";
+import ListItem from "../ListItem.vue";
+import { expect } from "vitest";
+
+it("renders correctly with checked prop", async () => {
+  // 挂载组件，并传入 checked prop
+  const wrapper = mount(ListItem, {
+    props: {
+      checked: true,
+    },
+    slots: {
+      default: "List item text",
+    },
+  });
+
+  // 断言组件是否正确渲染了传入的文本
+  expect(wrapper.text()).toContain("List item text");
+
+  // 断言复选框是否被勾选
+  const checkbox = wrapper.find<HTMLInputElement>('input[type="checkbox"]');
+  expect(checkbox.element.checked).toBe(true);
+});
+```
+
+2. 测试 emits 触发：
+
+```ts
+it("emits check-change event when checkbox is clicked", async () => {
+  const wrapper = mount(ListItem);
+
+  // 模拟用户点击复选框
+  await wrapper.find<HTMLInputElement>('input[type="checkbox"]').setValue(true);
+
+  // 断言是否触发了 check-change 事件，并且传递了正确的值
+  expect(wrapper.emitted("check-change")).toBeTruthy();
+});
+```
+
+3. 测试组件内部交互：
+
+```ts
+import TodoList from "../TodoList.vue";
+import AddInput from "../add-input/AddInput.vue";
+
+it("add a new todo item", async () => {
+  const wrapper = mount(TodoList);
+  wrapper.findComponent(AddInput).vm.$emit("add", "New Item");
+  // 判断数组中是否存在 text 为 'New Item' 的项
+  // @ts-ignore
+  expect(wrapper.vm.list).toContainEqual(
+    expect.objectContaining({ text: "New Item" })
+  );
+});
+```
+
+跟我的想法有点不同的是，Vue 组件的测试，还包括组件内部的交互部分，比如 [TodoList.vue 组件](https://github.com/reasonly8/todo-list-for-learning-vitest/blob/main/src/components/todo-list/TodoList.vue)，它虽然没有 props 和 emits，但它有跟用户有交互：在文本框中输入文字、点击新增或按 Enter 键新增、点击 Del 删除、点击复选框切换勾选状态、删除全部已完成的项，以及 ListItem 的 slot 是否正常渲染等。
+
+这些都应该测！
+
+所以，交互越是多的组件，测试也就越多，很有可能你的测试用例代码，比你实际的功能代码更多。
+
 ### 测试覆盖率
+
+做测试一般都会有覆盖率的要求，这里我严格要求自己，将覆盖率搞到 100%！
+
+先配置测试覆盖率的检测范围：
+
+```ts
+// vite.config.ts
+
+export default () => {
+  return defineConfig({
+    // ...
+    test: {
+      coverage: {
+        include: ["src/**/*.ts", "src/**/*.vue"],
+        exclude: ["src/main.ts"],
+      },
+      // ...
+    },
+  });
+};
+```
+
+这样配置后，测试覆盖范围限制在了 src 中除 main.ts 外的所有 .ts 和 .vue 模块。
+
+接下来在 package.json 中配置两个 script：
+
+````json
+{
+  // ...
+  "scripts": {
+    "test": "vitest",
+    "coverage": "vitest run --coverage"
+  }
+}
+
+这样配了后，当项目开发完成，比较成熟后，就可以补一补单元测试了，直接运行 `pnpm test` 就好。
+
+测试写得差不多了，就可以 `pnpm coverage` 看看测试覆盖率怎样，如果一切顺利会得到这样一个输出：
+
+```sh
+pnpm coverage
+
+> todo-list-for-learning-vitest@0.0.1 coverage D:\projects\todo-list-for-learning-vitest
+> vitest run --coverage
+
+
+ RUN  v1.6.0 D:/projects/todo-list-for-learning-vitest
+      Coverage enabled with v8
+
+ ✓ src/utils/listItem/__test__/list.test.ts (10)
+ ✓ src/composables/__test__/useList.test.ts (4)
+ ✓ src/components/todo-list/add-input/__test__/add-input.test.ts (7)
+ ✓ src/components/todo-list/list-item/__test__/list-item.test.ts (4)
+ ✓ src/components/todo-list/__test__/todo-list.test.ts (6)
+ ✓ src/__test__/app.test.ts (1)
+
+ Test Files  6 passed (6)
+      Tests  32 passed (32)
+   Start at  09:03:17
+   Duration  1.77s (transform 468ms, setup 0ms, collect 1.70s, tests 229ms, environment 3.49s, prepare 1.88s)
+
+ % Coverage report from v8
+-----------------------|---------|----------|---------|---------|-------------------
+File                   | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s
+-----------------------|---------|----------|---------|---------|-------------------
+All files              |     100 |      100 |     100 |     100 |
+ src                   |     100 |      100 |     100 |     100 |
+  App.vue              |     100 |      100 |     100 |     100 |
+ ...mponents/todo-list |     100 |      100 |     100 |     100 |
+  TodoList.vue         |     100 |      100 |     100 |     100 |
+  genNewItem.ts        |     100 |      100 |     100 |     100 |
+  useTodoList.ts       |     100 |      100 |     100 |     100 |
+ ...odo-list/add-input |     100 |      100 |     100 |     100 |
+  AddInput.vue         |     100 |      100 |     100 |     100 |
+  useAddInput.ts       |     100 |      100 |     100 |     100 |
+ ...odo-list/list-item |     100 |      100 |     100 |     100 |
+  ListItem.vue         |     100 |      100 |     100 |     100 |
+ src/composables       |     100 |      100 |     100 |     100 |
+  useList.ts           |     100 |      100 |     100 |     100 |
+ src/utils/listItem    |     100 |      100 |     100 |     100 |
+  getItemById.ts       |     100 |      100 |     100 |     100 |
+  listItemAdd.ts       |     100 |      100 |     100 |     100 |
+  listItemRemove.ts    |     100 |      100 |     100 |     100 |
+  listItemUpdate.ts    |     100 |      100 |     100 |     100 |
+-----------------------|---------|----------|---------|---------|-------------------
+````
+
+解释一下指标的含义：
+
+- Stmts: 语句覆盖率，Statement Coverage，衡量代码中被执行过的语句的比例；
+- Branch: 分支覆盖率，Branch Coverage，衡量代码中所有可能执行路径中被执行过的比例，比如 if/else、switch/case；
+- Funcs: 函数覆盖率，Function Coverage，衡量代码中被调用过的函数的比例；
+- Lines: 行覆盖率，跟语句覆盖率不同，行覆盖率还包括注释、空行等；
+- Uncovered Line: 未覆盖的代码行位置；
+
+## 总结
+
+1. 如果你的项目是基于 Vite 的，那 Vitest 是首选的测试框架，因为它跟 Jest 兼容，且跟 Vite 非常搭；
+2. 不要过早进行测试，尤其是功能没稳定的时候；
+3. 不是长期维护的项目，可以不用写测试，一来麻烦，二来成本蛮高，可能测试代码的行数比实际功能代码的行数都要多；
+4. 写测试对帮助代码完善有很大作用，多写可测的代码，优先级：纯函数 > 组合式函数 > 独立的 SFC；
+5. 写测试用例的时候，可以用 ChatGPT 辅助，准确率蛮高的；
+6. 如果做的项目是开源的，那一定得做测试，这样路人缘会比较好，也算是对自己项目的负责；
+
+## 接下来...
+
+由于 Todo List 项目特别小，所以测试的方法没有面面俱到，只是对前端测试、对 Vitest，有了一个基本的认识，后面做项目可能还会遇到：测试 Class、Pinia、Router，或者复杂组件，JSX 组件，异步接口调用等等。
+
+做开发的，边做边学其实是效率最快、记忆最深刻的，没必要学那些**可能**用到但还没有用到的知识，只学一定会用到，或者正在用的知识，让时间花的更有价值。
+
+对函数和组件的单元测试有了一定的认识之后，端到端测试也要安排一下，据说这两块结合起来，前端测试就算是齐活了。
+
+## 参考
+
+- 项目地址：https://github.com/reasonly8/todo-list-for-learning-vitest/blob/main/src/components/todo-list/TodoList.vue
+- ChatGPT：https://chatgpt.com/
+- Vitest 官网：https://vitest.dev/guide/
+- Chai：https://www.chaijs.com/
