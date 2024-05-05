@@ -1,5 +1,0 @@
-- 新建仓库（必须得是 Public 仓库）；
-- 在仓库中新增一个 `index.html` 文件；
-- 在仓库主页的顶部，选择 Settings 一栏，点击左侧的 Pages 菜单项，配置 Github Pages；
-- 配置自定义域名（可选）；
-- 配置 Github Actions（可选）；

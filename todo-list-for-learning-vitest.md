@@ -1,6 +1,8 @@
-# Todo List for Learning Vitest
+# 写一个测试覆盖率 100% 的 Todo List 项目
 
-- [Todo List for Learning Vitest](#todo-list-for-learning-vitest)
+技术栈：Vite + Vue3 + TypeScript + TailwindCSS + Vitest，项目很简单，用来学习 Vitest 正好。
+
+- [写一个测试覆盖率 100% 的 Todo List 项目](#写一个测试覆盖率-100-的-todo-list-项目)
   - [项目初始化](#项目初始化)
     - [用脚手架生成项目](#用脚手架生成项目)
     - [配置 `@` 路径别名](#配置--路径别名)
@@ -34,8 +36,6 @@
 之所以选择 Vitest，是因为我现在主要使用 Vite 和 Vue3，而且它是 antfu 等一众大佬开发和维护的，所以会比较放心。
 
 我通过实现一个 [Todo List 项目](https://github.com/reasonly8/todo-list-for-learning-vitest)，来学习 Vitest，项目很小，合适用来入门。
-
-项目技术栈为：Vite + Vue3 + TypeScript + TailwindCSS
 
 ## 项目初始化
 
@@ -1129,7 +1129,7 @@ All files              |     100 |      100 |     100 |     100 |
 
 ## 参考
 
-- 项目地址：https://github.com/reasonly8/todo-list-for-learning-vitest/blob/main/src/components/todo-list/TodoList.vue
+- 项目地址：https://github.com/reasonly8/todo-list-for-learning-vitest
 - ChatGPT：https://chatgpt.com/
 - Vitest 官网：https://vitest.dev/guide/
 - Chai：https://www.chaijs.com/
