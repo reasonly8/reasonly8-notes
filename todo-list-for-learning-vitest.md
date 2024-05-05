@@ -29,6 +29,8 @@
   - [接下来...](#接下来)
   - [参考](#参考)
 
+配合[项目源码](https://github.com/reasonly8/todo-list-for-learning-vitest)阅读更佳。
+
 最新想学一下 Vitest，原因是之前从来没有接触过，虽然老早就知道前端项目需要单元测试、端到端测试、UI 测试等，但由于公司没有这方面的要求，且业务需求经常变化，基本没有时间写测试，所以就没有学起来。
 
 之所以选择 Vitest，是因为我现在主要使用 Vite 和 Vue3，而且它是 antfu 等一众大佬开发和维护的，所以会比较放心。
@@ -1041,7 +1043,7 @@ export default () => {
 
 接下来在 package.json 中配置两个 script：
 
-````json
+```json
 {
   // ...
   "scripts": {
@@ -1049,13 +1051,14 @@ export default () => {
     "coverage": "vitest run --coverage"
   }
 }
+```
 
 这样配了后，当项目开发完成，比较成熟后，就可以补一补单元测试了，直接运行 `pnpm test` 就好。
 
 测试写得差不多了，就可以 `pnpm coverage` 看看测试覆盖率怎样，如果一切顺利会得到这样一个输出：
 
-```sh
-pnpm coverage
+```txt
+$ pnpm coverage
 
 > todo-list-for-learning-vitest@0.0.1 coverage D:\projects\todo-list-for-learning-vitest
 > vitest run --coverage
@@ -1100,7 +1103,7 @@ All files              |     100 |      100 |     100 |     100 |
   listItemRemove.ts    |     100 |      100 |     100 |     100 |
   listItemUpdate.ts    |     100 |      100 |     100 |     100 |
 -----------------------|---------|----------|---------|---------|-------------------
-````
+```
 
 解释一下指标的含义：
 
@@ -1129,7 +1132,7 @@ All files              |     100 |      100 |     100 |     100 |
 
 ## 参考
 
-- 项目地址：https://github.com/reasonly8/todo-list-for-learning-vitest/blob/main/src/components/todo-list/TodoList.vue
+- 项目地址：https://github.com/reasonly8/todo-list-for-learning-vitest
 - ChatGPT：https://chatgpt.com/
 - Vitest 官网：https://vitest.dev/guide/
 - Chai：https://www.chaijs.com/
