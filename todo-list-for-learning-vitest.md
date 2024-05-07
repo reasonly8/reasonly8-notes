@@ -164,7 +164,17 @@ console.log(fileURLToPath(new URL("./src", import.meta.url)));
 pnpm i -D @types/node
 ```
 
-用冒号+模块名进行引入 `node:url`，这种语法是 Node 内置的，不用纠结，根据网上查到的资料，这样写可以让开发者知道这个模块来自 node 核心，而不是什么第三方包。
+用冒号+模块名进行引入 `node:url`，这种语法是 Node 内置的，不用纠结，根据网上查到的资料，这样写可以让开发者知道这个模块来自 node 核心，而不是什么第三方包。也就是说，下面代码其实是等效的：
+
+```ts
+import url from "node:url";
+// 等同于：
+import url from "url";
+
+import path from "node:path";
+// 等同于：
+import path from "path";
+```
 
 解释完 vite.config.ts 中的配置，接下来还得改一下 tsconfig.json 中的配置，因为项目用了 TypeScript，Vite 现在可以正确解析路径别名了，但 TS 还不能：
 
