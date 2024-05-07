@@ -1,7 +1,5 @@
 # 写一个测试覆盖率 100% 的 Todo List 项目
 
-技术栈：Vite + Vue3 + TypeScript + TailwindCSS + Vitest，项目很简单，用来学习 Vitest 正好。
-
 - [写一个测试覆盖率 100% 的 Todo List 项目](#写一个测试覆盖率-100-的-todo-list-项目)
   - [项目初始化](#项目初始化)
     - [用脚手架生成项目](#用脚手架生成项目)
@@ -162,7 +160,17 @@ console.log(fileURLToPath(new URL("./src", import.meta.url)));
 pnpm i -D @types/node
 ```
 
-用冒号+模块名进行引入 `node:url`，这种语法是 Node 内置的，不用纠结，根据网上查到的资料，这样写可以让开发者知道这个模块来自 node 核心，而不是什么第三方包。
+用冒号+模块名进行引入 `node:url`，这种语法是 Node 内置的，不用纠结，根据网上查到的资料，这样写可以让开发者知道这个模块来自 node 核心，而不是什么第三方包。也就是说，下面代码其实是等效的：
+
+```ts
+import url from "node:url";
+// 等同于：
+import url from "url";
+
+import path from "node:path";
+// 等同于：
+import path from "path";
+```
 
 解释完 vite.config.ts 中的配置，接下来还得改一下 tsconfig.json 中的配置，因为项目用了 TypeScript，Vite 现在可以正确解析路径别名了，但 TS 还不能：
 
@@ -1041,7 +1049,7 @@ export default () => {
 
 接下来在 package.json 中配置两个 script：
 
-````json
+```json
 {
   // ...
   "scripts": {
@@ -1049,13 +1057,14 @@ export default () => {
     "coverage": "vitest run --coverage"
   }
 }
+```
 
 这样配了后，当项目开发完成，比较成熟后，就可以补一补单元测试了，直接运行 `pnpm test` 就好。
 
 测试写得差不多了，就可以 `pnpm coverage` 看看测试覆盖率怎样，如果一切顺利会得到这样一个输出：
 
-```sh
-pnpm coverage
+```txt
+$ pnpm coverage
 
 > todo-list-for-learning-vitest@0.0.1 coverage D:\projects\todo-list-for-learning-vitest
 > vitest run --coverage
@@ -1100,7 +1109,7 @@ All files              |     100 |      100 |     100 |     100 |
   listItemRemove.ts    |     100 |      100 |     100 |     100 |
   listItemUpdate.ts    |     100 |      100 |     100 |     100 |
 -----------------------|---------|----------|---------|---------|-------------------
-````
+```
 
 解释一下指标的含义：
 
